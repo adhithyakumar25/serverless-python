@@ -1,14 +1,18 @@
 FROM python:3.7-slim
 
-ENV APP_HOME /app 
+ENV APP_HOME /app
 WORKDIR $APP_HOME
+COPY . ./
 
-COPY . ./app
 
 ENV PYTHONUNBUFFERED 1
 ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
-
+# Install packages needed to run your application (not build deps):
+#   mime-support -- for mime types when serving static files
+#   postgresql-client -- for running database commands
+# We need to recreate the /usr/share/man/man{1..8} directories first because
+# they were clobbered by a parent image.
 RUN set -ex \
     && RUN_DEPS=" \
     libpcre3 \
@@ -19,6 +23,9 @@ RUN set -ex \
     && apt-get update && apt-get install -y --no-install-recommends $RUN_DEPS \
     && rm -rf /var/lib/apt/lists/*
 
+
+# Install build deps, then run `pip install`, then remove unneeded build deps all in a single step.
+# Correct the path to your production requirements file, if needed.
 RUN set -ex \
     && BUILD_DEPS=" \
     build-essential \
